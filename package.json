@@ -1,0 +1,38 @@
+{
+  "name": "school",
+  "version": "1.0.0",
+  "description": "Student, Subject, Teacher. it's about student information on each subjects",
+  "scripts": {
+    "prestart": "babel src --out-dir build --source-maps",
+    "dev": "babel-node src/index --ext js",
+    "start": "nodemon --exec babel-node -- src/index.js",
+    "debug": "DEBUG=express:* & babel-node src/index --ext js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/panhaleap/school.git"
+  },
+  "author": "diana",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/panhaleap/school/issues"
+  },
+  "homepage": "https://github.com/panhaleap/school#readme",
+  "dependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-latest": "^6.24.1",
+    "body-parser": "^1.18.3",
+    "debug": "^3.1.0",
+    "express": "^4.16.3",
+    "joi": "^13.4.0",
+    "mongoose": "^5.2.0",
+    "morgan": "^1.9.0"
+  },
+  "babel": {
+    "presets": [
+      "latest"
+    ]
+  }
+}
