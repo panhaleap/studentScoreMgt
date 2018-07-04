@@ -128,7 +128,7 @@ export const createScoresForStudentById = async (req, res) => {
       )
         .then(async data => {
           //await student.update({},{set:{firstName: 'Ny'}});
-          await student.update({},{set:{scores: data}});
+          await student.update({}, { set: { scores: data } });
           succeed(res, { message: 'Created Scores', data }, 201);
         })
         .catch(error => {
@@ -154,13 +154,14 @@ export const getListStudentReport = async (req, res) => {
     console.log(filterByGender);
     const filterByName = name ? { name } : {};
     const conditionByName = name ? condiSearchByName(filterByName) : {};
+    const filterByScoreExist = { scores: { $exists: true } };
 
-    const condition = { ...filterByActive, ...filterByGender };
+    const condition = { ...filterByActive, ...filterByGender, ...filterByScoreExist };
 
     const [students, total] = await Promise.all([
       Student.find(conditionByName)
         .find(condition)
-        .find({ scores: { $exists: true } })
+        .find({ 'scores.1': { $exists: true } })
         .populate({ path: 'scores', select: '-_id subject score' })
         .skip(skip)
         .limit(limit),
