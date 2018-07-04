@@ -2,8 +2,8 @@ import { failed, succeed } from '../../common/response';
 import { Score } from '../../models/score';
 import { Student } from '../../models/student';
 
-const condiSearchByName = filterByName => {
-  let wordSplit = { ...filterByName }.name.split(' ', 2);
+const condiSearchByName = name => {
+  let wordSplit = name.split(' ', 2);
 
   wordSplit.forEach((word, index, theArray) => {
     theArray[index] = new RegExp(`${word.trim()}`, 'i');
@@ -54,17 +54,16 @@ export const getStudentList = async (req, res) => {
     const filterByActive = isActive ? { isActive } : { isActive: true };
     const filterByGender = gender ? { gender: { $in: gender } } : { gender: { $in: ['male', 'female'] } };
     console.log(filterByGender);
-    const filterByName = name ? { name } : {};
+    // const filterByName = name ? { name } : {};
     const conditionByName = name ? condiSearchByName(filterByName) : {};
 
-    const condition = { ...filterByActive, ...filterByGender };
+    const condition = { ...filterByActive, ...filterByGender, ...conditionByName };
 
     const [students, total] = await Promise.all([
-      Student.find(conditionByName)
-        .find(condition)
+      Student.find(condition)
         .skip(skip)
         .limit(limit),
-      Student.count(conditionByName).count(condition)
+      Student.count(condition)
     ]);
 
     if (students) succeed(res, { message: 'Success', Data: students, options: { limit, skip, total } }, 200);
@@ -118,25 +117,26 @@ export const createScoresForStudentById = async (req, res) => {
     const { scores } = req.body;
     const student = await Student.where({ _id: id, isActive: true }).findOne();
 
-    if (student) {
-      await Promise.all(
-        scores.map(async each => {
-          const { subject, score } = each;
-          const scoreModel = new Score({ student: student._id, subject, score });
-          return scoreModel.save();
-        })
-      )
-        .then(async data => {
-          //await student.update({},{set:{firstName: 'Ny'}});
-          await student.update({}, { set: { scores: data } });
-          succeed(res, { message: 'Created Scores', data }, 201);
-        })
-        .catch(error => {
-          failed(res, error, 500);
-        });
-    } else {
-      failed(res, { message: 'Student not found' }, 500);
+    // ======================
+    if (!student) {
+      failed(res, { message: 'Student not found' }, 400);
+      return;
     }
+
+    // var arr = [{ student: student._id, subject, score }];
+    // await Score.insertMany(arr);
+
+    // await Promise.all(
+    //   scores.map(async each => {
+    //     const { subject, score } = each;
+    //     const scoreModel = new Score();
+    //     return scoreModel.save();
+    //   })
+    // ).then(async data => {
+    //   //await student.update({},{set:{firstName: 'Ny'}});
+    //   await student.update({}, { set: { scores: data } });
+    //   succeed(res, { message: 'Created Scores', data }, 201);
+    // });
   } catch (error) {
     failed(res, error, 500);
   }
