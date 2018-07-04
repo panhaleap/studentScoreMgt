@@ -116,23 +116,59 @@ export const createScoresForStudentById = async (req, res) => {
   try {
     const { id } = req.params;
     const { scores } = req.body;
-
     const student = await Student.where({ _id: id, isActive: true }).findOne();
 
-    await Promise.all(
-      scores.map(async each => {
-        const { subject, score } = each;
-        const scoreModel = new Score({ student: student._id, subject, score });
-        return scoreModel.save();
-      })
-    )
-      .then(data => {
-        succeed(res, { message: 'Created Scores', data }, 201);
-      })
-      .catch(error => {
-        failed(res, error, 500);
-      });
+    if (student) {
+      await Promise.all(
+        scores.map(async each => {
+          const { subject, score } = each;
+          const scoreModel = new Score({ student: student._id, subject, score });
+          return scoreModel.save();
+        })
+      )
+        .then(data => {
+          succeed(res, { message: 'Created Scores', data }, 201);
+        })
+        .catch(error => {
+          failed(res, error, 500);
+        });
+    } else {
+      failed(res, { message: 'Student not found' }, 500);
+    }
   } catch (error) {
     failed(res, error, 500);
+  }
+};
+
+export const getListStudentReport = async (req, res) => {
+  try {
+    let { limit = 10, page = 1, isActive, gender, name } = req.query;
+    console.log(name);
+    limit = getLimit(limit);
+    const skip = getSkip(page, limit);
+
+    const filterByActive = isActive ? { isActive } : { isActive: true };
+    const filterByGender = gender ? { gender: { $in: gender } } : { gender: { $in: ['male', 'female'] } };
+    console.log(filterByGender);
+    const filterByName = name ? { name } : {};
+    const conditionByName = name ? condiSearchByName(filterByName) : {};
+
+    const condition = { ...filterByActive, ...filterByGender };
+
+    const [students, total] = await Promise.all([
+      Student.find(conditionByName)
+        .find(condition)
+        .find({ scores: { $exists: true } })
+        .populate({ path: 'scores', select: '-_id subject score' })
+        .skip(skip)
+        .limit(limit),
+      Student.count(conditionByName).count(condition)
+    ]);
+
+    if (students) succeed(res, { message: 'Success', Data: students, options: { limit, skip, total } }, 200);
+    else failed(res, 'Not Found', 404);
+  } catch (error) {
+    console.log(error);
+    failed(res, error, 400);
   }
 };
