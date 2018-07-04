@@ -126,7 +126,9 @@ export const createScoresForStudentById = async (req, res) => {
           return scoreModel.save();
         })
       )
-        .then(data => {
+        .then(async data => {
+          //await student.update({},{set:{firstName: 'Ny'}});
+          await student.update({},{set:{scores: data}});
           succeed(res, { message: 'Created Scores', data }, 201);
         })
         .catch(error => {
